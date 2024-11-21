@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Last Tables Inserted</title>
+</head>
+<body>
+    <h1>Last Two Tables Inserted</h1>
+    {% for table_name, rows in tables_data.items() %}
+        <h2>Table: {{ table_name }}</h2>
+        <table border="1">
+            <thead>
+                <tr>
+                    {% for column in rows[0].__table__.columns %}
+                        <th>{{ column.name }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in rows %}
+                    <tr>
+                        {% for column in row.__table__.columns %}
+                            <td>{{ getattr(row, column.name) }}</td>
+                        {% endfor %}
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endfor %}
+</body>
+<script src="{{ url_for('static', filename='js/socket.io.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/index.js') }}"></script>
+<script>
+    const evtSource = new EventSource("/stream");
+
+    evtSource.onmessage = function(event) {
+        if (event.data === 'update') {
+            location.reload(); // Reload the page on update event
+        }
+    };
+</script>
+</html>

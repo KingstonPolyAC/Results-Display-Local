@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meeting Setup</title>
+    {{ bootstrap.load_css() }}
+    <link href="{{ url_for('static', filename='slick/slick-theme.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='slick/slick.css') }}" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(to bottom right, #fefcff, #2575fc);
+            height: 100vh;
+            margin: 0;
+        }
+        .logo {
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+        .container {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .table-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            max-height: calc(100vh - 150px); /* Adjust based on your header and footer height */
+            overflow: hidden;
+        }
+        .slider {
+            flex-grow: 1;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <img src="{{ url_for('static', filename='images/GLINTegrate.png') }}" width="150" height="50" alt="Logo" class="my-2 mx-2 mx-auto d-block logo">
+        <p class="text-center my-4 fw-bold fs-3">Meeting Name: {{ meeting_name }}</p>
+        <div class="slider container-fluid h-100">
+            {% for event in track_events %}
+            <div class="table-container mx-4 my-4">
+                <table class="table table-bordered border-dark border-3">
+                    <thead>
+                        <tr class="table-primary fw-bold">
+                            <th colspan="4" class=" fs-6 text-center">{{ event.name }}</th>
+                            <th colspan="1" class="text-center">Wind: {{ event.wind_value }}</th>
+
+                        </tr>
+                        <tr class="fw-bold">
+                            <th>Position</th>
+                            <th>Bib No</th>
+                            <th>Name</th>
+                            <th>Team</th>
+                            <th>Time</th>
+                        </tr>
+                    </thead>
+                    <tbody class="table-group-divider">
+                        {% for result in event.results %}
+                        <tr class="fs-6">
+                            <td>{{ result.position }}</td>
+                            <td>{{ result.bib_no }}</td>
+                            <td>{{ result.first_name }} {{ result.last_name }}</td>
+                            <td>{{ result.team }}</td>
+                            <td>{{ result.time }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endfor %}
+
+            {% for event in field_events %}
+            <div class="table-container mx-4 my-4">
+                <table class="table table-bordered border-dark border-3">
+                    <thead>
+                        <tr class="table-primary fw-bold">
+                            <th colspan="4" class=" fs-6 text-center">{{ event.name }}</th>
+                            <th colspan="3" class="text-center">Wind: {{ event.wind_value }}</th>
+
+                        </tr>
+                        <tr class="fw-bold">
+                            <th>Position</th>
+                            <th>Bib No</th>
+                            <th>Competition No</th>
+                            <th>Name</th>
+                            <th>Team</th>
+                            <th>Time/ Performance</th>
+                            <th>Wind</th>
+                        </tr>
+                    </thead>
+                    <tbody class="table-group-divider">
+                        {% for result in event.results %}
+                        <tr class="fs-6">
+                            <td>{{ result.position }}</td>
+                            <td>{{ result.bib_no }}</td>
+                            <td>{{ result.competition_order }}</td>
+                            <td>{{ result.first_name }} {{ result.last_name }}</td>
+                            <td>{{ result.team }}</td>
+                            <td>{{ result.performance }}</td>
+                            <td>{{ result.wind }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    {{ bootstrap.load_js() }}
+    <script src="{{ url_for('static', filename='js/jquery-3.7.1.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='slick/slick.min.js') }}"></script>
+    <script>
+        $(document).ready(function() {
+            $('.slider').slick({
+                slidesToShow: 1,
+                slidesToScroll: 1,
+                infinite: true,
+                autoplay: true,
+                autoplaySpeed: 10000,
+                responsive: [
+                    {
+                        breakpoint: 768,
+                        settings: {
+                            slidesToShow: 1,
+                            slidesToScroll: 1
+                        }
+                    }
+                ]
+            });
+
+            function adjustTableSize() {
+                const tableContainers = document.querySelectorAll('.table-container');
+                tableContainers.forEach(container => {
+                    const table = container.querySelector('table');
+                    const containerHeight = container.clientHeight;
+                    const headerHeight = table.querySelector('thead').clientHeight;
+                    const rows = table.querySelectorAll('tbody tr');
+                    const rowHeight = (containerHeight - headerHeight) / rows.length;
+
+                    rows.forEach(row => {
+                        row.style.height = `${rowHeight}px`;
+                    });
+                });
+            }
+
+            adjustTableSize();
+            window.addEventListener('resize', adjustTableSize);
+        });
+
+        const evtSource = new EventSource("/stream");
+
+        evtSource.onmessage = function(event) {
+            if (event.data === 'update') {
+                location.reload(); // Reload the page on update event
+            }
+        };
+    </script>
+</body>
+</html>
