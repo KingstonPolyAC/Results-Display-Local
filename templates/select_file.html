@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Select Excel File</title>
+</head>
+<body>
+    <h1>Select Excel File</h1>
+    <input type="file" id="fileInput" />
+    <button onclick="submitFile()">Submit</button>
+
+    <script>
+        function submitFile() {
+            var fileInput = document.getElementById('fileInput');
+            if (fileInput.files.length === 0) {
+                alert('Please select a file');
+                return;
+            }
+            var file = fileInput.files[0];
+            var filePath = file.webkitRelativePath || file.fileName || file.name;
+            fetch('/save_path', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ file_path: filePath }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert('File path saved successfully');
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
+        }
+    </script>
+</body>
+</html>

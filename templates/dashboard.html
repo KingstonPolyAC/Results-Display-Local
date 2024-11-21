@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meeting Setup</title>
+    {{ bootstrap.load_css() }}
+    <link href="{{ url_for('static', filename='style.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='slick/slick-theme.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='slick/slick.css') }}" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(to bottom right, #fefcff, #2575fc);
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+        .logo {
+            position: absolute;
+            top: 10;
+            left: 10;
+        }
+        .container {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .table-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            max-height: calc(100vh - 150px); /* Adjust based on your header and footer height */
+            overflow-y: auto;
+        }
+        .table-container table {
+            width: 100%; /* Allow table to expand based on content */
+            table-layout: auto; /* Added to adjust column width based on content */
+            /* white-space: nowrap; /* Prevent content from wrapping */
+        }
+        .table-container table thead tr {
+            position: sticky;
+            top: 0;
+            z-index: 1; /* Ensure header is above the body rows */
+        }
+        .slider {
+            flex-grow: 1;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid my-2">
+        
+        <div class="row ">
+            <div class="col">
+                <img src="{{ url_for('static', filename='images/GLINTegrate.png') }}" width="150vw" height="50" alt="Logo" class="logo img-fluid">
+                <div class="col d-flex justify-content-end">
+                    <!-- <button class="btn btn-primary mx-2" onclick="location.reload()">Refresh Tables</button> -->
+                    <a class="btn btn-primary mx-2" href="{{ url_for('refresh_tables') }}">Refresh Tables</a>
+
+                    <a class="btn btn-primary mx-2" href="{{ url_for('export_lffs') }}">Export Field Cards</a>
+
+                    <div class="dropdown nav-links mx-2">
+                        <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        Setup Links
+                        </button>
+                        <ul class="dropdown-menu text-center">
+                            <li><a href="{{ url_for('index') }}">Change Meeting Info</a></li>
+                            <li><a href="{{ url_for('dashboard') }}">All Events</a></li>
+                            <li><a href="{{ url_for('dashboard_track') }}">Track Events</a></li>
+                            <li><a href="{{ url_for('dashboard_field') }}">Field Events</a></li>
+                            {% if not meeting_info['track_path_check'] and not meeting_info['field_path_check'] %}
+                            <li><a href="{{ url_for('last_tables') }}">Latest Events (Both)</a></li>
+                            {% endif %}
+
+                            {% if not meeting_info['track_path_check'] %}
+                            <li><a href="{{ url_for('get_latest_table', event_type='track') }}">Latest Track Event</a></li>
+                            {% endif %}
+
+                            {% if not meeting_info['field_path_check'] %}
+                            <li><a href="{{ url_for('get_latest_table', event_type='field') }}">Latest Field Event</a></li>
+                            {% endif %}
+                            <!-- <li><a href="{{ url_for('last_tables') }}">Latest Events (Both)</a></li>
+                            <li><a href="{{ url_for('get_latest_table', event_type='track') }}">Latest Track Event</a></li>
+                            <li><a href="{{ url_for('get_latest_table', event_type='field') }}">Latest Field Event</a></li> -->
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row my-2">
+            <div class="col-12">
+                <h1 class="text-center fw-bold">Meeting Name: {{ meeting_name }}</h1>
+            </div>
+        </div>
+        
+        <!-- <div class="slider row h-100">
+            {% for event in track_events %}
+            <div class="table-container mx-4 my-4">
+                {% for table in event.tables %}
+                <table class="table table-bordered border-dark border-3">
+                    <thead>
+                        <tr class="table-primary fw-bold">
+                            <th colspan="4" class=" fs-6 text-center">{{ event.name }}</th>
+                            <th colspan="1" class="text-center">Wind: {{ event.wind_value }}</th>
+                        </tr>
+                        <tr class="fw-bold">
+                            <th>Position</th>
+                            <th>Bib No</th>
+                            <th>Name</th>
+                            <th>Team</th>
+                            <th>Time</th>
+                        </tr>
+                    </thead>
+                    <tbody class="table-group-divider">
+                        {% for result in table %}
+                        <tr class="fs-6">
+                            <td>{{ result.position }}</td>
+                            <td>{{ result.bib_no }}</td>
+                            <td>{{ result.first_name }} {{ result.last_name }}</td>
+                            <td>{{ result.team }}</td>
+                            <td>{{ result.time }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% endfor %}
+            </div>
+            {% endfor %}
+
+            {% for event in field_events %}
+            <div class="table-container mx-4 my-4">
+                {% for table in event.tables %}
+                <table class="table table-bordered border-dark border-3">
+                    <thead>
+                        <tr class="table-primary fw-bold">
+                            <th colspan="4" class=" fs-6 text-center">{{ event.name }}</th>
+                            <th colspan="3" class="text-center">Wind: {{ event.wind_value }}</th>
+                        </tr>
+                        <tr class="fw-bold">
+                            <th>Position</th>
+                            <th>Bib No</th>
+                            <th>Competition No</th>
+                            <th>Name</th>
+                            <th>Team</th>
+                            <th>Time/ Performance</th>
+                            <th>Wind</th>
+                        </tr>
+                    </thead>
+                    <tbody class="table-group-divider">
+                        {% for result in table %}
+                        <tr class="fs-6">
+                            <td>{{ result.position }}</td>
+                            <td>{{ result.bib_no }}</td>
+                            <td>{{ result.competition_order }}</td>
+                            <td>{{ result.first_name }} {{ result.last_name }}</td>
+                            <td>{{ result.team }}</td>
+                            <td>{{ result.performance }}</td>
+                            <td>{{ result.wind }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% endfor %}
+            </div>
+            {% endfor %}
+        </div> -->
+        <div class="slider ">
+            {% if team_results %}
+            <div class="slide">
+                <div class="table-container mx-4 my-4">
+                    <table class="minimalistBlack">
+                        <thead>
+                            <tr class="fw-bold">
+                                <th>This Match</th>
+                                <th>Team Name</th>
+                                <th>Points</th>
+                            </tr>
+                        </thead>
+                        <tbody class="table-group-divider">
+                            {% for team in team_results %}
+                            <tr class="fs-6">
+                                <td class="text-center">{{ team[0] }}</td>
+                                <td class="text-center">{{ team[1] }}</td>
+                                <td class="text-center">{{ team[2] }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+            {% for i in range(0, track_events|length, 2) %}
+            <div class="slide">
+                <div class="table-container mx-4 my-4">
+                    <table class="minimalistBlack">
+                        <thead>
+                            <tr class="table-primary fw-bold">
+                                <th colspan="{% if track_events[i].names_empty %}3{% else %}4{% endif %}" class="text-center">{{ track_events[i].name }}</th>
+                                <th colspan="1" class="text-center">Wind: {{ track_events[i].wind_value }}</th>
+                            </tr>
+                            <tr class="fw-bold">
+                                <th>Position</th>
+                                <th>Bib No</th>
+                                {% if not track_events[i].names_empty %}
+                                <th>Name</th>
+                                {% endif %}
+                                <th>Team</th>
+                                <th>Time</th>
+                            </tr>
+                        </thead>
+                        <tbody class="table-group-divider">
+                            {% for result in track_events[i].results %}
+                            <tr class="fs-6">
+                                <td class="text-center">{{ result[1] }}</td>
+                                <td class="text-center">{{ result[2] }}</td>
+                                {% if not track_events[i].names_empty %}
+                                <td>{{ result[4] }} {{ result[3] }}</td>
+                                {% endif %}
+                                <td class="text-center">{{ result[5] }}</td>
+                                <td class="text-center">{{ result[6] }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% if i + 1 < track_events|length %}
+                <div class="table-container mx-4 my-4">
+                    <table class="minimalistBlack">
+                        <thead>
+                            <tr class="table-primary fw-bold">
+                                <th colspan="{% if track_events[i+1].names_empty %}3{% else %}4{% endif %}" class="text-center">{{ track_events[i+1].name }}</th>
+                                <th colspan="1" class="text-center">Wind: {{ track_events[i+1].wind_value }}</th>
+                            </tr>
+                            <tr class="fw-bold">
+                                <th>Position</th>
+                                <th>Bib No</th>
+                                {% if not track_events[i+1].names_empty %}
+                                <th>Name</th>
+                                {% endif %}
+                                <th>Team</th>
+                                <th>Time</th>
+                            </tr>
+                        </thead>
+                        <tbody class="table-group-divider">
+                            {% for result in track_events[i+1].results %}
+                            <tr class="fs-6">
+                                <td class="text-center">{{ result[1] }}</td>
+                                <td class="text-center">{{ result[2] }}</td>
+                                {% if not track_events[i+1].names_empty %}
+                                <td>{{ result[4] }} {{ result[3] }}</td>
+                                {% endif %}
+                                <td class="text-center">{{ result[5] }}</td>
+                                <td class="text-center">{{ result[6] }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+
+            {% for i in range(0, field_events|length, 2) %}
+            <div class="slide">
+                <div class="table-container mx-4 my-4">
+                    <table class="minimalistBlack">
+                        <thead>
+                            <tr class="table-primary fw-bold">
+                                <th colspan="{% if field_events[i].is_jump %}6{% else %}5{% endif %}" class="text-center">{{ field_events[i].name }}</th>
+                            </tr>
+                            <tr class="fw-bold">
+                                <th>Position</th>
+                                <th>Bib No</th>
+                                <th>Name</th>
+                                <th>Team</th>
+                                <th>Perf</th>
+                                {% if field_events[i].is_jump %}
+                                <th>Wind</th>
+                                {% endif %}
+                            </tr>
+                        </thead>
+                        <tbody class="table-group-divider">
+                            {% for result in field_events[i].results %}
+                            <tr class="fs-6">
+                                <td class="text-center">{{ result[1] }}</td>
+                                <td class="text-center">{{ result[2] }}</td>
+                                <td>{{ result[5] }} {{ result[4] }}</td>
+                                <td class="text-center">{{ result[6] }}</td>
+                                <td class="text-center">{{ result[7] }}</td>
+                                {% if field_events[i].is_jump %}
+                                <td class="text-center">{{ result[8] }}</td>
+                                {% endif %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% if i + 1 < field_events|length %}
+                <div class="table-container mx-4 my-4">
+                    <table class="minimalistBlack">
+                        <thead>
+                            <tr class="table-primary fw-bold">
+                                <th colspan="{% if field_events[i+1].is_jump %}6{% else %}5{% endif %}" class="text-center">{{ field_events[i+1].name }}</th>
+                            </tr>
+                            <tr class="fw-bold">
+                                <th>Position</th>
+                                <th>Bib No</th>
+                                <th>Name</th>
+                                <th>Team</th>
+                                <th>Perf</th>
+                                {% if field_events[i+1].is_jump %}
+                                <th>Wind</th>
+                                {% endif %}
+                            </tr>
+                        </thead>
+                        <tbody class="table-group-divider">
+                            {% for result in field_events[i+1].results %}
+                            <tr class="fs-6">
+                                <td class="text-center">{{ result[1] }}</td>
+                                <td class="text-center">{{ result[2] }}</td>
+                                <td>{{ result[5] }} {{ result[4] }}</td>
+                                <td class="text-center">{{ result[6] }}</td>
+                                <td class="text-center">{{ result[7] }}</td>
+                                {% if field_events[i+1].is_jump %}
+                                <td class="text-center">{{ result[8] }}</td>
+                                {% endif %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    {{ bootstrap.load_js() }}
+    <script src="{{ url_for('static', filename='js/jquery-3.7.1.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='slick/slick.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/socket.io.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/index.js') }}"></script>
+    <script>
+        $(document).ready(function() {
+            $('.slider').slick({
+                slidesToShow: 4,
+                slidesToScroll: 4,
+                infinite: true,
+                autoplay: true,
+                autoplaySpeed: 10000,
+                adaptiveHeight: true,
+                responsive: [
+                    {
+                        breakpoint: 1024,
+                        settings: {
+                            slidesToShow: 1,
+                            slidesToScroll: 1
+                        }
+                    },
+                    {
+                        breakpoint: 2048,
+                        settings: {
+                            slidesToShow: 1,
+                            slidesToScroll: 1
+                        }
+                    },
+                    {
+                        breakpoint: 4096,
+                        settings: {
+                            slidesToShow: 2,
+                            slidesToScroll: 2
+                        }
+                    }
+                ]
+            });
+
+            function adjustTableSize() {
+                const tableContainers = document.querySelectorAll('.table-container');
+                tableContainers.forEach(container => {
+                    const table = container.querySelector('table');
+                    const containerHeight = container.clientHeight;
+                    const headerHeight = table.querySelector('thead').clientHeight;
+                    const rows = table.querySelectorAll('tbody tr');
+                    const rowHeight = (containerHeight - headerHeight) / rows.length;
+
+                    rows.forEach(row => {
+                        row.style.height = `${rowHeight}px`;
+                    });
+                });
+            }
+
+            adjustTableSize();
+            window.addEventListener('resize', adjustTableSize);
+        });
+
+        const evtSource = new EventSource("/stream");
+
+        evtSource.onmessage = function(event) {
+            if (event.data === 'update') {
+                location.reload(); // Reload the page on update event
+            }
+        };
+
+        
+    </script>
+</body>
+</html>

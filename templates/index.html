@@ -1,0 +1,115 @@
+{% from 'bootstrap5/utils.html' import render_messages %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meeting Setup</title>
+    {{ bootstrap.load_css() }}
+    <style>
+        body {
+            background: linear-gradient(to bottom right, #fefcff, #2575fc);
+            height: 100vh;
+        }
+        
+    </style>
+</head>
+<body>
+    <div class="container d-flex justify-content-center align-items-center min-vh-100">
+        <div class="">
+            <img src="{{ url_for('static', filename='images/GLINTegrate.png') }}" width="250vw" height="50" alt="Logo" class="mx-auto d-block">
+            {{ render_messages() }}
+            <h1 class="text-center mb-4">Setup Meeting</h1>
+            <h6 class="text-center text-danger mt-2">Use the checkboxes to disable any path(s) you don't want to include</h6>
+
+
+            <!-- <form action="/excel_path" method="get" class="mx-auto" style="max-width: 400px;">
+                <div class="form-group">
+                    <label for="workbook_path">Excel Workbook Path</label>
+                    <input type="text" class="form-control" id="workbook_path" readonly name="workbook_path" value="{{ meeting_info['workbook_path'] }}">
+                    <input type="checkbox" id="workbook_path_check" class="form-check-input">
+                </div>
+                <button class="btn btn-success mt-2" id="workbook_submit_btn" type="submit">Search Excel File</button>
+
+            </form> -->
+            <form method="POST" class="mx-auto" style="max-width: 400px;">
+                
+                <hr>
+                <div class="form-group mb-3">
+                    <label for="workbook_path">Excel Workbook Path</label>
+                    <div class="input-group">
+                        <div class="input-group-text">
+                            <input class="form-check-input mt-0" type="checkbox" id="workbook_path_check" name="workbook_path_check" aria-label="Checkbox for following text input">
+                        </div>
+                        <input type="text" class="form-control" id="workbook_path" readonly name="workbook_path" value="{{ meeting_info['workbook_path'] }}" aria-label="Text input with checkbox">
+                    </div>
+                </div>
+                <button class="btn btn-success mt-2" id="workbook_submit_btn" type="submit" name="excel_submit">Search Excel File</button>
+                <hr>
+                <div class="form-group">
+                    <label for="meeting_name">Meeting Name</label>
+                    <input type="text" class="form-control" id="meeting_name" name="meeting_name" value="{{ meeting_info['name'] }}">
+                </div>
+                <div class="form-group mb-3">
+                    <label for="track_path">Track File Path</label>
+                    <div class="input-group">
+                        <div class="input-group-text">
+                            <input class="form-check-input mt-0" type="checkbox" id="track_path_check" name="track_path_check" aria-label="Checkbox for following text input">
+                        </div>
+                        <input type="text" class="form-control" id="track_path" name="track_path" value="{{ meeting_info['track_path'] }}" aria-label="Text input with checkbox">
+                    </div>
+                </div>
+                
+                <div class="form-group mb-3">
+                    <label for="field_path">Field File Path</label>
+                    <div class="input-group">
+                        <div class="input-group-text">
+                            <input class="form-check-input mt-0" type="checkbox" id="field_path_check" name="field_path_check" aria-label="Checkbox for following text input">
+                        </div>
+                        <input type="text" class="form-control" id="field_path" name="field_path" value="{{ meeting_info['field_path'] }}" aria-label="Text input with checkbox">
+                    </div>
+                </div>
+                <div class="text-center mt-2">
+                    <button type="submit" name="submit" class="btn btn-primary">Submit</button>
+                    <button type="submit" name="reset" class="btn btn-secondary">Reset</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    {{ bootstrap.load_js() }}
+    <script>
+        // Function to close the alert after a specified timeout
+        function closeAlert() {
+            var alertElement = document.querySelector('.alert');
+            if (alertElement) {
+                alertElement.classList.add('fade');
+                setTimeout(function() {
+                    alertElement.classList.remove('show');
+                    alertElement.classList.add('hide');
+                }, 150); // Bootstrap transition duration
+                setTimeout(function() {
+                    alertElement.remove();
+                }, 500); // Total timeout duration for complete removal
+            }
+        }
+
+        // Set the timeout for 5 seconds (5000 milliseconds)
+        setTimeout(closeAlert, 5000);
+
+        document.addEventListener('DOMContentLoaded', (event) => {
+            // Add event listeners to checkboxes
+            document.getElementById('workbook_path_check').addEventListener('change', function() {
+                document.getElementById('workbook_path').disabled = this.checked;
+                document.getElementById('workbook_submit_btn').disabled = this.checked;
+
+            });
+            document.getElementById('track_path_check').addEventListener('change', function() {
+                document.getElementById('track_path').disabled = this.checked;
+            });
+            document.getElementById('field_path_check').addEventListener('change', function() {
+                document.getElementById('field_path').disabled = this.checked;
+            });
+        });
+    </script>
+</body>
+</html>

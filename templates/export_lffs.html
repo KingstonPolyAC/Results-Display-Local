@@ -1,0 +1,204 @@
+{% from 'bootstrap5/utils.html' import render_messages %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FieldCards to PDF</title>
+    {{ bootstrap.load_css() }}
+    <link href="{{ url_for('static', filename='css/select2.min.css')}}" rel="stylesheet" />
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow-y: scroll;
+            background: linear-gradient(to bottom right, #fefcff, #2575fc);
+            color: #fff;
+        }
+        .table-container {
+            max-height: 70vh; /* Set the max height to 70% of the viewport height */
+            overflow-y: auto; /* Enable vertical scrolling */
+        }
+        .logo {
+            margin-bottom: 20px;
+        }
+        .select2-container {
+            width: 300px !important;
+        }
+        .select2-container--default .select2-selection--multiple {
+            background-color: #fff; /* Background of the select box */
+            color: #000; /* Text color */
+        }
+        .select2-container--default .select2-results__option {
+            background-color: #fff; /* Background of the options */
+            color: #000; /* Text color of the options */
+        }
+        .select2-container--default .select2-selection--multiple .select2-selection__choice {
+            background-color: #2575fc; /* Background of selected options */
+            color: #fff; /* Text color of selected options */
+        }
+        .select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
+            color: #fff; /* Text color of the remove icon */
+        }
+        .process-btn {
+            margin-top: 20px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .spinner-border {
+            display: none;
+            width: 1.5rem;
+            height: 1.5rem;
+            border: 0.2em solid currentColor;
+            border-right-color: transparent;
+            border-radius: 50%;
+            animation: spinner-border 0.75s linear infinite;
+            position: absolute;
+            margin-right: 150px;
+        }
+        @keyframes spinner-border {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <img src="{{ url_for('static', filename='images/GLINTegrate.png') }}" width="250vw" height="50" alt="Logo" class="mx-auto d-block">
+
+    {{ render_messages() }}
+    <div class="container row">
+        <div class="col">
+            <label for="meeting_name ">Meeting Name</label>
+            <input type="text" class="form-control my-2" id="meeting-name" name="meeting-name" placeholder="Enter Meeting Name" value="{{ meeting_info['name'] }}">
+            <label for="meeting_name ">Venue Name</label>
+            <input type="text" class="form-control my-2" id="venue-name" name="meeting-name" placeholder="Enter Venue Name" >
+            <label for="meeting_name ">LFF Events</label><br>
+            <select id="event-select" class="form-control" multiple="multiple"></select>
+
+            <button name="from_lffs_btn" class="btn btn-primary process-btn">
+                <span class="spinner-border" role="status" aria-hidden="true"></span>
+                <span class="btn-text">Process Selected to PDF</span>
+            </button>
+
+            <button name="from_evt_btn" class="btn btn-secondary process-btn">
+                <span class="spinner-border" role="status" aria-hidden="true"></span>
+                <span class="btn-text">Create FieldCards from EVT Files</span>
+            </button>
+        </div>
+
+        <div class="container mt-3 col">
+            <div class="table-container">
+                <table class="table table-bordered table-hover">
+                    <thead class="thead-dark">
+                        <tr>
+                            <th>Filename</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="file-list">
+                        <!-- Dynamic content will be inserted here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- <button class="btn btn-primary process-btn">Process Selected to PDF</button> -->
+
+    
+
+    {{ bootstrap.load_js() }}
+    <script src="{{ url_for('static', filename='js/jquery-3.7.1.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/select2.min.js') }}"></script>
+    <script>
+        $(document).ready(function() {
+            // Initialize Select2
+            $('#event-select').select2({
+                placeholder: 'Select events',
+                allowClear: true
+            });
+
+            // Fetch event data and populate the select element
+            $.getJSON('/get_events', function(data) {
+                data.forEach(event => {
+                    var newOption = new Option(event.event_name, event.filename, false, false);
+                    $('#event-select').append(newOption).trigger('change');
+                });
+            });
+
+            // Handle process button click
+            $('.process-btn').click(function() {
+                const selectedFiles = $('#event-select').val();
+                const venueName = $('#venue-name').val();
+                const meetingName = $('#meeting-name').val();
+                const buttonName = $(this).attr('name'); // Get the name of the clicked button
+
+                if (selectedFiles.length > 0 || buttonName == "from_evt_btn") { //Permit buttonName from_evt_btn since no selectedFiles are required
+                    // Show loading spinner and change button text only for the clicked button
+                    $(this).find('.spinner-border').show();
+                    $(this).find('.btn-text').text('Please Wait');
+
+                    $.ajax({
+                        url: '/events_page',
+                        type: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify({ selected_files: selectedFiles, venue_name: venueName, meeting_name: meetingName, button_name: buttonName }),
+                        success: function(response) {
+                            // Assuming response contains an array of file paths
+                            var fileList = response.html_files;
+                            var fileTableBody = $('#file-list');
+
+                            // Clear any existing rows
+                            fileTableBody.empty();
+
+                            // Populate the table with file data
+                            fileList.forEach(function(filePath) {
+                                var parts = filePath.split('/');
+                                var fileName = parts[parts.length - 1]; // Extract the filename from the path
+                                var row = `
+                                    <tr>
+                                        <td>${fileName}</td>
+                                        <td><button class="btn btn-primary" onclick="openPrintWindow('${filePath}')">Print</button></td>
+                                    </tr>
+                                `;
+                                fileTableBody.append(row);
+                            });
+                            console.log(response.html_files);
+                            alert(response.message);
+                        },
+                        error: function(xhr, status, error) {
+                            console.error(error);
+                            alert('An error occurred while processing the files.');
+                        },
+                        complete: function() {
+                            // Hide loading spinner and revert button text only for the clicked button
+                            $(this).find('.spinner-border').hide();
+                            if (buttonName == "from_evt_btn") {
+                                $(this).find('.btn-text').text('Create FieldCards from EVT Files');
+                            }else {
+                                $(this).find('.btn-text').text('Process Selected Files to PDF');
+                            }
+
+                        }.bind(this) // Bind the 'complete' callback to 'this'
+                    });
+                } else {
+                    alert('No files selected.');
+                }
+            });
+        });
+
+        function openPrintWindow(filePath) {
+            console.log(filePath)
+            var printWindow = window.open(filePath, '_blank', 'width=800,height=600');
+            printWindow.onload = function() {
+                printWindow.print();
+            };
+        }
+    </script>
+</body>
+</html>

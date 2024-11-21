@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scoreboard</title>
+    {{ bootstrap.load_css() }}
+    <link href="{{ url_for('static', filename='slick/slick-theme.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='slick/slick.css') }}" rel="stylesheet">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            height: 100vh;
+            margin: 0;
+            padding: 0;
+            background-color: #000;
+            color: #fff;
+            overflow: hidden;
+        }
+        .table-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            max-height: calc(100vh - 50px); /* Adjust based on your header and footer height */
+            overflow-y: auto;
+        }
+        .table-container table {
+            width: 100%;
+            table-layout: fixed;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 2vh 0;
+            font-size: 2.5vh;
+            font-weight: bold;
+        }
+        th, td {
+            border: 0.2vw solid #fff;
+            padding: 1vw;
+            text-align: left;
+        }
+        th {
+            background-color: #000edf;
+        }
+        tr:nth-child(even) {
+            background-color: #26a3eb;
+        }
+        tr:nth-child(odd) {
+            background-color: #0178eb;
+        }
+        .footer {
+            font-size: 2.5vw;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="slider container-fluid">
+        <div class="table-container mx-4 my-4">
+
+            <table>
+                <thead>
+                    <tr>
+                        <th colspan="2">{{ table_name }}<br> Heat {{ table_data.heat_no }}</th>
+                        <th>WIND: {{ table_data.wind_value }}</th>
+                    
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in table_data.rows %}
+                    <tr>
+                        
+                        <!-- <td>{{ row[3]}} {{ row[4] }}</td> -->
+                        <td>
+                            {% if row[3] | is_digit %}
+                                {{ row[4] }} {{ row[5] }}
+                            {% else %}
+                                {{ row[3] }} {{ row[4] }}
+                            {% endif %}
+                        </td>
+                        <td>
+                            {{ row[5]}}
+                        </td>
+                        <td>{{ row[6] if event_type=="track" else row[7] }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+    {{ bootstrap.load_js() }}
+    <script src="{{ url_for('static', filename='js/jquery-3.7.1.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='slick/slick.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/socket.io.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/index.js') }}"></script>
+    <script>
+        $(document).ready(function() {
+            $('.slider').slick({
+                slidesToShow: 1,
+                slidesToScroll: 1,
+                infinite: true,
+                autoplay: true,
+                autoplaySpeed: 10000,
+                responsive: [
+                    {
+                        breakpoint: 768,
+                        settings: {
+                            slidesToShow: 1,
+                            slidesToScroll: 1
+                        }
+                    }
+                ]
+            });
+
+            function adjustTableSize() {
+                const tableContainers = document.querySelectorAll('.table-container');
+                tableContainers.forEach(container => {
+                    const table = container.querySelector('table');
+                    const containerHeight = container.clientHeight;
+                    const headerHeight = table.querySelector('thead').clientHeight;
+                    const rows = table.querySelectorAll('tbody tr');
+                    const rowHeight = (containerHeight - headerHeight) / rows.length;
+
+                    rows.forEach(row => {
+                        row.style.height = `${rowHeight}px`;
+                    });
+                });
+            }
+
+            adjustTableSize();
+            window.addEventListener('resize', adjustTableSize);
+        });
+        const evtSource = new EventSource("/stream");
+
+        evtSource.onmessage = function(event) {
+            if (event.data === 'update') {
+                location.reload(); // Reload the page on update event
+            }
+        };
+    </script>
+
+</body>
+</html>
